@@ -7,23 +7,31 @@ import { useNavigate, Link } from 'react-router-dom';
 const AuthForm: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
 
     const navigate = useNavigate();
 
-    const handleSubmit = (event: React.FormEvent) => {
+    const handleSubmit = async (event: React.FormEvent) => {
+        console.log(`Passando pelo arquivo AuthForm, metodo handleSubmit, com as variaveis: email=${email}, password=***`);
         event.preventDefault();
-        let loginResult = authController.loginUser(email, password);
-        if (loginResult){
-            alert("Login successful!");
-            navigate('/dashboard');  //susbstituindo 
+        setError('');
+
+        const loginResult = await authController.loginUser(email, password);
+        console.log(`O metodo handleSubmit do arquivo AuthForm vai retornar: success=${loginResult.success}`);
+
+        if (loginResult.success) {
+            alert("Login bem-sucedido!");
+            navigate('/dashboard');
         } else {
-            alert("Invalid email or password.");
+            setError(loginResult.message);
+            alert(`Erro: ${loginResult.message}`);
         }
     }
 
     return (
         <form onSubmit={handleSubmit}>
             <h2>Entre na sua conta !</h2>
+            {error && <p style={{ color: 'red' }}>{error}</p>}
             <InputField
             type="email"
             label="Email"

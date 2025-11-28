@@ -9,31 +9,38 @@ const RegisterScreen: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [error, setError] = useState('');
     
     const navigate = useNavigate();
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
+        console.log(`Passando pelo arquivo RegisterScreen, metodo handleRegister, com as variaveis: name=${name}, email=${email}, password=***, confirmPassword=***`);
         e.preventDefault();
+        setError('');
 
         if (password !== confirmPassword) {
+            console.log('O metodo handleRegister do arquivo RegisterScreen vai retornar: senhas não coincidem');
+            setError("As senhas não coincidem!");
             alert("As senhas não coincidem!");
             return;
         }
 
-        // Lógica que agora funciona com a classe authController atualizada
-        let registerResult = authController.registerUser(name, email, password); 
+        const registerResult = await authController.registerUser(name, email, password);
+        console.log(`O metodo handleRegister do arquivo RegisterScreen vai retornar: success=${registerResult.success}`);
 
-        if (registerResult) { 
-            alert("Cadastro realizado com sucesso! Faça login."); 
-            navigate('/'); 
+        if (registerResult.success) {
+            alert(registerResult.message + " Faça login.");
+            navigate('/');
         } else {
-            alert("Erro ao cadastrar usuário. Tente novamente.");
+            setError(registerResult.message);
+            alert(`Erro: ${registerResult.message}`);
         }
     };
 
     return (
         <div style={{ textAlign: 'center', marginTop: '50px' }}>
             <h1>Cadastre-se no AnimalHotels</h1>
+            {error && <p style={{ color: 'red' }}>{error}</p>}
             
             <form onSubmit={handleRegister} style={{ maxWidth: '400px', margin: '0 auto' }}>
                 
