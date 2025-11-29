@@ -1,90 +1,114 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import InputField from '../components/ui/InputField'; 
-import Button from '../components/ui/Button'; 
-import authController from '../controllers/authController'; 
+import { FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
+import axios from 'axios'; 
+
+// Backend ta na porta 8000
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const RegisterScreen: React.FC = () => {
+    const navigate = useNavigate();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [error, setError] = useState('');
-    
-    const navigate = useNavigate();
-
-    const handleRegister = async (e: React.FormEvent) => {
-        console.log(`Passando pelo arquivo RegisterScreen, metodo handleRegister, com as variaveis: name=${name}, email=${email}, password=***, confirmPassword=***`);
+    const [loading, setLoading] = useState(false);
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
+        setLoading(true);
 
         if (password !== confirmPassword) {
-            console.log('O metodo handleRegister do arquivo RegisterScreen vai retornar: senhas não coincidem');
-            setError("As senhas não coincidem!");
-            alert("As senhas não coincidem!");
+            alert('As senhas não coincidem!');
+            setLoading(false);
             return;
         }
 
-        const registerResult = await authController.registerUser(name, email, password);
-        console.log(`O metodo handleRegister do arquivo RegisterScreen vai retornar: success=${registerResult.success}`);
+        try {
+            const response = await axios.post(`${API_URL}/api/register`, {
+                name: name,
+                email: email,
+                password: password
+            }, {
+                withCredentials: false 
+            });
+            
+            if (response.data.success) {
+                alert(`Cadastro bem-sucedido! Por favor, faça login.`);
+                navigate('/', { replace: true }); 
+            }
 
-        if (registerResult.success) {
-            alert(registerResult.message + " Faça login.");
-            navigate('/');
-        } else {
-            setError(registerResult.message);
-            alert(`Erro: ${registerResult.message}`);
+        } catch (error: any) {
+            console.error("Erro no cadastro:", error);
+            
+            if (error.response && error.response.status === 400) {
+                alert("E-mail já em uso ou dados inválidos.");
+            } else {
+                alert("Falha no cadastro. Verifique a conexão com o servidor.");
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <h1>Cadastre-se no AnimalHotels</h1>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            
-            <form onSubmit={handleRegister} style={{ maxWidth: '400px', margin: '0 auto' }}>
+        <div className="auth-background">
+            <div className="register-card">
+                <div className="logo-section">
+                    <span role="img" aria-label="paw">🐾</span> AnimalHotels
+                </div>
                 
-                <InputField
-                    type="text"
-                    label="Nome Completo"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Seu nome completo"
-                />
+                <h2>Cadastre-se no<br/>**AnimalHotels**</h2>
 
-                <InputField
-                    type="email"
-                    label="E-mail"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seuemail@exemplo.com"
-                />
+                <form onSubmit={handleSubmit} className="register-form">
+                    <div className="input-group">
+                        <FaUser className="input-icon" />
+                        <input
+                            type="text"
+                            placeholder="Nome Completo"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="input-group">
+                        <FaEnvelope className="input-icon" />
+                        <input
+                            type="email"
+                            placeholder="E-mail"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="input-group">
+                        <FaLock className="input-icon" />
+                        <input
+                            type="password"
+                            placeholder="Senha"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <div className="input-group">
+                        <FaLock className="input-icon" />
+                        <input
+                            type="password"
+                            placeholder="Confirme a Senha"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                        />
+                    </div>
+                    <button type="submit" className="register-button" disabled={loading}>
+                        {loading ? 'Cadastrando...' : 'Cadastrar'}
+                    </button>
+                </form>
 
-                <InputField
-                    type="password"
-                    label="Senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="********"
-                />
-
-                <InputField
-                    type="password"
-                    label="Confirme a Senha"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="********"
-                />
-                <div style={{ marginTop: '20px' }}>
-                    <Button type="submit"> 
-                        Cadastrar
-                    </Button>
-                </div> 
-            </form>
-            
-            <p style={{ marginTop: '20px' }}>
-                Já tem conta? <Link to="/">Faça Login</Link>
-            </p>
+                <div className="login-link">
+                    Já tem conta? <Link to="/">**Faça Login**</Link>
+                </div>
+            </div>
         </div>
     );
 };
